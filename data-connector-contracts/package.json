@@ -1,0 +1,52 @@
+{
+  "name": "pinai-contracts",
+  "version": "1.0.0",
+  "description": "Smart contracts for PIN AI platform",
+  "main": "index.js",
+  "scripts": {
+    "clean": "rm -rf ./artifacts ./cache ./coverage ./types ./coverage.json && pnpm typechain",
+    "test": "pnpm clean && pnpm hardhat:test",
+    "compile": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat compile",
+    "lint": "pnpm lint:sol && pnpm lint:ts && pnpm prettier:check",
+    "lint:sol": "solhint --max-warnings 25 \"contracts/**/*.sol\"",
+    "lint:ts": "eslint .",
+    "postinstall": "DOTENV_CONFIG_PATH=./.env.example pnpm typechain",
+    "prettier:check": "prettier --check \"**/*.{js,json,md,sol,ts,yml}\"",
+    "prettier:write": "prettier --write \"**/*.{js,json,md,sol,ts,yml}\"",
+    "typechain": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat typechain",
+    "hardhat:test": "hardhat test --network hardhat",
+    "coverage": "hardhat coverage",
+    "coverage:report": "hardhat coverage && open coverage/index.html",
+    "deploy-sepolia": "hardhat deploy --network sepolia",
+    "mint-sepolia": "hardhat mint --amount 42 --network sepolia"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.3",
+    "@nomicfoundation/hardhat-ethers": "^3.0.5",
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@nomicfoundation/hardhat-verify": "^2.0.3",
+    "@openzeppelin/hardhat-upgrades": "^3.8.0",
+    "@typechain/hardhat": "^9.1.0",
+    "@types/chai": "^4.3.20",
+    "cross-env": "^7.0.3",
+    "eslint": "^9.9.0",
+    "eslint-config-prettier": "^8.5.0",
+    "ethers": "^6.10.0",
+    "hardhat": "^2.19.4",
+    "hardhat-gas-reporter": "^1.0.9",
+    "prettier": "^2.8.4",
+    "prettier-plugin-solidity": "^1.1.2",
+    "solhint": "^3.4.0",
+    "solhint-plugin-prettier": "^0.0.5",
+    "solidity-coverage": "0.8.12",
+    "typechain": "^8.3.2"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.1",
+    "@openzeppelin/contracts-upgradeable": "^5.0.1",
+    "@thundernetworkrad/readline-sync": "^2023.3.13-1",
+    "@trivago/prettier-plugin-sort-imports": "^5.2.1",
+    "dotenv": "^16.0.3",
+    "solady": "^0.0.288"
+  }
+}
