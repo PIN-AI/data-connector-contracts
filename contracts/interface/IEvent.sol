@@ -37,14 +37,17 @@ interface IEvent {
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event TaskRegistered(
         bytes32 indexed taskId, 
-        bytes32 dataHash,
+        uint64 timeout,
         address indexed dataprovider,
+        address indexed node,
         uint256 reward
     );
     event TaskStatusUpdated(bytes32 indexed taskId, ITask.TaskStatus status);
-    event ProofSubmitted(bytes32 indexed taskId, address indexed node, bytes32 indexed proofHash);
+    event ProofSubmitted(bytes32 indexed taskId, address indexed node);
     event RewardTokenUpdated(address oldToken, address newToken);
     event RewardClaimed(address indexed to, uint256 amount);
     event TaskTimeoutUpdated(uint256 oldTimeout, uint256 newTimeout);
     event MaxRewardAmountUpdated(uint256 oldAmount, uint256 newAmount);
+    event RewardAllocated(bytes32 indexed taskId, address indexed dataprovider, address indexed node, uint256 amount);
+    event TaskValidated(bytes32 indexed taskId);
 }

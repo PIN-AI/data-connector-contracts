@@ -3,8 +3,7 @@ pragma solidity ^0.8.27;
 
 interface IStaking {
     struct UnstakeRequest {
-        uint256 amount;
-        uint256 unStakeTime;
+        uint64 unStakeTime;
     }
 
     function unstakeRequest() external;

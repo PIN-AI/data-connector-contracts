@@ -17,7 +17,7 @@ interface IRegistry {
         bytes publicKey;
         string apiEndpoint;
         uint256 registerTime;
-        bytes attestationProof;
+        bytes32 attestationProofHash;
         NodeStatus status;
         TEEType teeType;
         uint256 stakeAmount;
@@ -27,12 +27,10 @@ interface IRegistry {
         address rewardAddress;
         bytes publicKey;
         string apiEndpoint;
-        uint256 registerTime;
         TEEType teeType;
     }
 
     struct User {
-        address userAddress;
         bytes publicKey;
         uint256 registerTime;
         UserStatus status;
@@ -57,9 +55,9 @@ interface IRegistry {
         Active
     }
 
-    function registerUser(UserRegistryParams calldata params, bytes calldata credentials) external;
+    function registerUser(UserRegistryParams calldata params) external;
 
-    function registerNode(TEERegistryParams calldata params, bytes calldata attestation) payable external;
+    function registerNode(TEERegistryParams calldata params) payable external;
 
     function isRegisteredNode(address node) external view returns (bool);
 

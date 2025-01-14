@@ -17,22 +17,24 @@ interface ITask {
         uint256 creationTime;
         uint256 timeoutTimestamp;
         TaskStatus status;
-        address[] nodes;
-        bytes32 inputHash;
-        bytes32 resultHash;
-        bytes[] attestationProofs;
+        address node;
+        bytes attestationProof;
         uint256 reward;
     }
 
     function registerTask(
         bytes32 taskId,
-        bytes32 dataHash, 
+        uint64 timeout,
         address dataprovider,
-        uint256 reward
+        address node,
+        uint256 rewardAmount
     ) external payable;
-    function updateTaskStatus(bytes32 taskId, TaskStatus status) external;
-    function submitProof(bytes32 taskId, bytes calldata proof) external;
-    function verifyResult(bytes32 taskId) external returns (bool);
+
+    function submitProof(bytes32[] calldata taskIds, bytes calldata proof) external;
+
+    function validateTask(bytes32[] calldata taskIds) external;
+
     function getTaskTimeout() external view returns (uint256);
+
     function setTaskTimeout(uint256 timeout) external;
 }
