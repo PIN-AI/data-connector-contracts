@@ -43,7 +43,7 @@ interface IEvent {
         uint256 reward
     );
     event TaskStatusUpdated(bytes32 indexed taskId, ITask.TaskStatus status);
-    event ProofSubmitted(bytes32 indexed taskId, address indexed node);
+    event ProofSubmitted(bytes32 indexed merkleRoot, bytes32[] taskIds, address indexed node);
     event RewardTokenUpdated(address oldToken, address newToken);
     event RewardClaimed(address indexed to, uint256 amount);
     event TaskTimeoutUpdated(uint256 oldTimeout, uint256 newTimeout);

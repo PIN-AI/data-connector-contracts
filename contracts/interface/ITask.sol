@@ -22,6 +22,11 @@ interface ITask {
         uint256 reward;
     }
 
+    struct AttestationProof {
+        bytes32[] taskIds;
+        bytes proof;
+    }
+
     function registerTask(
         bytes32 taskId,
         uint64 timeout,
@@ -30,7 +35,7 @@ interface ITask {
         uint256 rewardAmount
     ) external payable;
 
-    function submitProof(bytes32[] calldata taskIds, bytes calldata proof) external;
+    function submitProof(bytes32[] calldata taskIds, bytes32 merkleRoot, bytes calldata proof) external;
 
     function validateTask(bytes32[] calldata taskIds) external;
 

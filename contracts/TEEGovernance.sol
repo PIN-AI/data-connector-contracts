@@ -48,6 +48,7 @@ contract TEEGovernance is
     mapping(address => uint256) public userCredits;
     mapping(address => uint256) public rewardStorage;
     mapping(address => UnstakeRequest) public unstakeRequests;
+    mapping(bytes32 => AttestationProof) public attestationProofs;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -281,6 +282,7 @@ contract TEEGovernance is
 
     function submitProof(
         bytes32[] calldata taskIds,
+        bytes32 merkleRoot,
         bytes calldata attestation
     ) external override whenNotPaused onlyRole(TEE_NODE_ROLE) {
         for(uint256 i = 0; i < taskIds.length; i++) {
@@ -289,12 +291,14 @@ contract TEEGovernance is
             require(_isTaskValid(task), "Task invalid");
             require(task.node == _msgSender(), "Not authorized node");
             
-            task.attestationProof = attestation;
             task.status = TaskStatus.Completed;
             tasks[taskIds[i]] = task;
-            
-            emit ProofSubmitted(taskIds[i], _msgSender());
         }
+        attestationProofs[merkleRoot] = AttestationProof({
+            taskIds: taskIds,
+            proof: attestation
+        });
+        emit ProofSubmitted(merkleRoot, taskIds, _msgSender());
     }
 
     function validateTask(
