@@ -5,6 +5,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Pausable} from "./lib/Pausable.sol";
 import {ECDSA} from "./lib/ECDSA.sol";
 import {IStaking} from "./interface/IStaking.sol";
@@ -27,6 +28,7 @@ contract TEEGovernance is
     IGovernance
 {
     using ECDSA for bytes32;
+    using SafeERC20 for IERC20;
 
     bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
@@ -40,7 +42,7 @@ contract TEEGovernance is
     address private _rewardToken;
     uint256 private _maxRewardAmount;
     uint256 private _minTaskTimeout;
-
+    
     mapping(address => User) public users;
     mapping(bytes32 => Task) public tasks;
     mapping(address => TEENode) public nodes;
@@ -49,6 +51,10 @@ contract TEEGovernance is
     mapping(address => uint256) public rewardStorage;
     mapping(address => UnstakeRequest) public unstakeRequests;
     mapping(bytes32 => AttestationProof) public attestationProofs;
+
+    address[] private nodeAddresses;
+
+    bool private _isRewardTokenEnable;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -79,6 +85,12 @@ contract TEEGovernance is
         _rewardToken = address(0); // Default to ETH
         _minTaskTimeout = 3 minutes;
         _maxRewardAmount = 32 ether;
+        _isRewardTokenEnable = false;
+    }
+
+    modifier onlyRewardTokenEnable() {
+        require(_isRewardTokenEnable, "Reward token not enabled");
+        _;
     }
 
     function registerNode(
@@ -88,6 +100,7 @@ contract TEEGovernance is
         require(msg.value >= _stakeAmount, "Insufficient stake amount");
         
         _grantRole(TEE_NODE_ROLE, params.nodeAddress);
+        nodeAddresses.push(params.nodeAddress);
 
         nodes[params.nodeAddress] = TEENode({
             nodeAddress: params.nodeAddress,
@@ -154,6 +167,16 @@ contract TEEGovernance is
         emit UnstakeCancelled(_msgSender());
     }
 
+    function _removeNodeAddress(address node) internal {
+        for (uint256 i = 0; i < nodeAddresses.length; i++) {
+            if (nodeAddresses[i] == node) {
+                nodeAddresses[i] = nodeAddresses[nodeAddresses.length - 1];
+                nodeAddresses.pop();
+                break;
+            }
+        }
+    }
+
     function unstake() external override whenNotPaused {
         require(hasRole(TEE_NODE_ROLE, _msgSender()), "Not a TEE node");
         UnstakeRequest memory request = unstakeRequests[_msgSender()];
@@ -161,6 +184,7 @@ contract TEEGovernance is
             request.unStakeTime < uint64(block.timestamp) && 
             request.unStakeTime > 0, "Unstake delay not passed");
 
+        _removeNodeAddress(_msgSender());
         delete nodes[_msgSender()];
         delete unstakeRequests[_msgSender()];
         uint256 amount = _getTEEStakedAmount(_msgSender());
@@ -323,21 +347,28 @@ contract TEEGovernance is
         _rewardToken = token;
     }
 
-    function reward(address node, uint256 amount) external override whenNotPaused {
-        address _to = nodes[node].rewardAddress;
-        address _rewardAddress = _msgSender();
-        require(_rewardAddress == _to || _rewardAddress == node, "Not the reward address");
-        require(rewardStorage[_to] >= amount, "Insufficient reward balance");
-        rewardStorage[_to] -= amount;
+    function setRewardTokenStatus(bool status) external override onlyRole(ADMIN_ROLE) {
+        _isRewardTokenEnable = status;
+    }
+
+    function reward(address account, uint256 amount) external override whenNotPaused onlyRewardTokenEnable {
+        require(rewardStorage[account] >= amount, "Insufficient reward balance");
+        require(
+            _msgSender() == account || 
+            (nodes[account].nodeAddress != address(0) && _msgSender() == nodes[account].rewardAddress), 
+            "Not authorized to claim reward"
+        );
+        
+        rewardStorage[account] -= amount;
         
         if (_rewardToken == address(0)) {
-            (bool success, ) = _to.call{value: amount}("");
+            (bool success, ) = account.call{value: amount}("");
             require(success, "ETH transfer failed");
         } else {
-            IERC20(_rewardToken).transfer(_to, amount);
+            IERC20(_rewardToken).safeTransfer(account, amount);
         }
         
-        emit RewardClaimed(_to, amount);
+        emit RewardClaimed(account, amount);
     }
 
     function _getTEEStakedAmount(address node) internal view returns (uint256) {
@@ -398,5 +429,21 @@ contract TEEGovernance is
         rewardStorage[nodes[task.node].rewardAddress] += rewardPerParticipant;
         
         emit RewardAllocated(task.taskId, task.dataprovider, task.node, rewardPerParticipant);
+    }
+
+    function getAttestationProof(bytes32[] calldata merkleRoot) external view returns (AttestationProof[] memory) {
+        AttestationProof[] memory proofs = new AttestationProof[](merkleRoot.length);
+        for(uint256 i = 0; i < merkleRoot.length; i++) {
+            proofs[i] = attestationProofs[merkleRoot[i]];
+        }
+        return proofs;
+    }
+
+    function getNodeAddresses() external view returns (address[] memory) {
+        return nodeAddresses;
+    }
+
+    function getRewardAmount(address account) external view returns (uint256) {
+        return rewardStorage[account];
     }
 } 

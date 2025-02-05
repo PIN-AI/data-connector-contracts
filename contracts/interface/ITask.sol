@@ -35,7 +35,13 @@ interface ITask {
         uint256 rewardAmount
     ) external payable;
 
-    function submitProof(bytes32[] calldata taskIds, bytes32 merkleRoot, bytes calldata proof) external;
+    function submitProof(
+        bytes32[] calldata taskIds,
+        bytes32 merkleRoot,
+        bytes calldata attestation
+    ) external;
+
+    function getAttestationProof(bytes32[] calldata merkleRoot) external view returns (AttestationProof[] memory);
 
     function validateTask(bytes32[] calldata taskIds) external;
 

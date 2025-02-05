@@ -6,6 +6,8 @@ interface IReward {
     function setRewardToken(address token) external;
     function reward(address to, uint256 amount) external;
     function rewardStorage(address account) external view returns (uint256);
+    function getRewardAmount(address account) external view returns (uint256);
+    function setRewardTokenStatus(bool status) external;
 }
 
 
